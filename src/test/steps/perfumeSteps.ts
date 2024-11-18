@@ -16,7 +16,7 @@ AfterAll(async function () {
 
 Given('User navigate to the homepage', async function () {
   await page.goto('https://www.douglas.de/de', { waitUntil: 'load' });
-  await this.page.getByTestId('uc-accept-all-button').click();
+  //await this.page.getByTestId('uc-accept-all-button').click();
   // Handle cookie acceptance only if necessary
 //   const shadowRoot = await page.$('#usercentrics-root');
 //   const acceptAllButton = await shadowRoot?.$('[data-testid="uc-accept-all-button"]');
@@ -24,33 +24,34 @@ Given('User navigate to the homepage', async function () {
 });
 
 When('User navigate to perfume products', async function () {
-  await this.page.getByTestId('header-component-item--navigation').getByRole('link', { name: 'PARFUM' }).click();
-  await this.page.getByRole('link', { name: 'PARFUM', exact: true }).click();
-  await this.page.locator(`//span[@data-testid='header-component-item--search']`).hover();
+  await page.waitForLoadState('load');
+  await page.getByRole('link', { name: 'PARFUM' }).first().click();
+  await page.getByRole('link', { name: 'PARFUM', exact: true }).click();
+  await page.locator(`//span[@data-testid='header-component-item--search']`).hover();
 });
 
 When('User apply the perfume filter for creatria "{string}"', async function (criteria: string) {
-  await this.page.waitForLoadState('load');
-  await this.page.getByTestId('flags').click();
-  await this.page.getByRole('checkbox', { name: `${criteria}` }).click();
+  await page.waitForLoadState('load');
+  await page.getByTestId('flags').click();
+  await page.getByRole('checkbox', { name: `${criteria}` }).click();
 });
 
-When('User apply the perfume filter for brand {string}', async function (brand: string) {
-  await this.page.getByTestId('brand').click();
-  await this.page.getByPlaceholder('Marke suchen').click();
-  await this.page.getByPlaceholder('Marke suchen').fill(brand);
-  await this.page.getByRole('checkbox', { name: `${brand}` }).click();
+When('User apply the perfume filter for brand "{string}"', async function (brand: string) {
+  await page.waitForLoadState('load');
+  await page.getByPlaceholder('Marke suchen').click();
+  await page.getByPlaceholder('Marke suchen').fill(brand);
+  await page.getByRole('checkbox', { name: `${brand}` }).click();
 });
   
-  When('User validate the brand details for "{string}"', async function (brand:string) {
+  When('User validate the brand details for "{string}"', async function (expectedbrand:string) {
   const mismatchedProducts: { brand: string }[] = [];
-  const brandProducts = await page.locator(`//div[contains(text(),'${brand}')]`).elementHandles();
+  const brandProducts = await page.$$(`//div[contains(text(),'${expectedbrand}')]`);
 
   for (const brandProduct of brandProducts) {
     try {
-      const productBrand = await brandProduct.$eval('brand-selector', (el) => el.textContent?.trim() ?? '');
-      if (productBrand !== brand) {
-        mismatchedProducts.push({ brand: productBrand });
+      const brand = await brandProduct.$eval('brand-selector', (el) => el.textContent?.trim() ?? '');
+      if (brand !== expectedbrand) {
+        mismatchedProducts.push({ brand });
       }
     } catch (error) {
       console.error('Error retrieving brand for a product:', error);
@@ -58,27 +59,27 @@ When('User apply the perfume filter for brand {string}', async function (brand: 
   }
 
   if (mismatchedProducts.length === 0) {
-    console.log(`All products match the brand filter: ${brand}`);
+    console.log(`All products match the brand filter: ${expectedbrand}`);
   } else {
-    console.error(`Some products do not match the brand filter: ${brand}`);
+    console.error(`Some products do not match the brand filter: ${expectedbrand}`);
     console.table(mismatchedProducts);
   }
 });
 
 When('User filter by classification "{string}"', async function (classification: string) {
-  await this.page.getByTestId('classificationClassName').click();
-  await this.page.getByRole('checkbox', { name: `${classification}` }).click();
+  await page.getByTestId('classificationClassName').click();
+  await page.getByRole('checkbox', { name: `${classification}` }).click();
 });
 
-When('User validate the classification details for "{string}"', async function (classification: string) {
+When('User validate the classification details for "{string}"', async function (expectedClassification: string) {
   const mismatchedProducts: { classification: string }[] = [];
-  const products = await this.page.locator(`//div[contains(@class, 'product-classification')]`).elementHandles();
+  const products = await page.locator(`//div[contains(@class, 'product-classification')]`).elementHandles();
 
   for (const product of products) {
     try {
-      const productClassification = await product.evaluate((el) => el.textContent?.trim() || '');
-      if (productClassification !== classification) {
-        mismatchedProducts.push({ classification: productClassification });
+      const classification = await product.evaluate(el => el.textContent?.trim() || '');
+      if (classification !== expectedClassification) {
+        mismatchedProducts.push({ classification});
       }
     } catch (error) {
       console.error('Error retrieving classification for a product:', error);
@@ -86,26 +87,26 @@ When('User validate the classification details for "{string}"', async function (
   }
 
   if (mismatchedProducts.length === 0) {
-    console.log(`All products match the classification filter: ${classification}`);
+    console.log(`All products match the classification filter: ${expectedClassification}`);
   } else {
-    console.error(`Some products do not match the classification filter: ${classification}`);
+    console.error(`Some products do not match the classification filter: ${expectedClassification}`);
     console.table(mismatchedProducts);
   }
 });
 
 When('User apply filters for occasion "{string}"', async function (occasion: string) {
-    await this.page.getByTestId('Geschenk für').click();
-    await this.page.getByPlaceholder('Geschenk für suchen').fill(occasion);
-    await this.page.getByRole('checkbox', { name: `${occasion}` }).click();
+    await page.getByTestId('Geschenk für').click();
+    await page.getByPlaceholder('Geschenk für suchen').fill(occasion);
+    await page.getByRole('checkbox', { name: `${occasion}` }).click();
 });
 
 When('User apply the perfume filter for gender "{string}"', async function (gender: string) {
-   await this.page.getByTestId('gender').click();
-    await this.page.getByRole('checkbox', { name: `${gender}` }).click();
+   await page.getByTestId('gender').click();
+    await page.getByRole('checkbox', { name: `${gender}` }).click();
 });
 
-Then('User verify the product display for "{string}"', async function (product: string) {
-  const productDetail = await this.page.getByTestId('details-link');
-    await expect(productDetail).toContainText(productDetail);
+Then('User verify the product display for "{string}"', async function (expectedProductText: string) {
+  const productDetail = await page.getByTestId('details-link');
+    await expect(productDetail).toContainText(expectedProductText);
 
 });
